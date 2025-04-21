@@ -10,13 +10,8 @@ myhtml :: Html
 myhtml =
   html_
     "Haskell Blog Generator"
-    ( append_
-      (h1_ "Heading")
-      ( append_
-        (p_ "Paragraph #1 <")
-        ( append_
-          (p_ "Paragraph #2")
-          (p_ "Paragraph #3")
-        )
-      )
+    ( h1_ "Heading"
+      <> p_ "Paragraph #1"
+      <> p_ "Paragraph #2"
+      <> p_ "Paragraph #3"
     )

@@ -1,23 +1,10 @@
 module Html.Internal where
+import GHC.Natural (Natural)
+import Html.Markup
 
--- type Document
---   = [Structure]
+newtype Html = Html String
 
--- data Structure
---   = Heading Natural String
---   | Paragraph String
---   | UnorderedList [String]
---   | OrderedList [String]
---   | CodeBlock [String]
-
-newtype Html
-  = Html String
-
-newtype Structure
-  = Structure String
-
-type Title
-  = String
+type Title = String
 
 html_ :: Title -> Structure -> Html
 html_ title content =
@@ -29,52 +16,75 @@ html_ title content =
     )
 
 p_ :: String -> Structure
-p_ = Structure . el "p". escape
+p_ = Paragraph
 
 h1_ :: String -> Structure
-h1_ = Structure . el "h1" . escape
+h1_ = Heading 1
 
-ul_ :: [Structure] -> Structure
-ul_ =
-  Structure . el "ul" . concatMap (el "li" . getStructureString)
+ul_ :: [String] -> Structure
+ul_ = UnorderedList
 
-ol_ :: [Structure] -> Structure
-ol_ = 
-    Structure . el "ol" . concatMap (el "li" . getStructureString)
+ol_ :: [String] -> Structure
+ol_ = OrderedList
 
-code_ :: String -> Structure
-code_ = 
-    Structure .el "pre"
+code_ :: [String] -> Structure
+code_ = CodeBlock
 
 el :: String -> String -> String
 el tag content =
   "<" <> tag <> ">" <> content <> "</" <> tag <> ">"
 
-append_ :: Structure -> Structure -> Structure
-append_ c1 c2 =
-  Structure (getStructureString c1 <> getStructureString c2)
+instance Semigroup Structure where
+  (<>) :: Structure -> Structure -> Structure
+  (<>) (Paragraph a) (Paragraph b) = Paragraph (a <> b)
+  (<>) a b = Paragraph (getStructureString a <> getStructureString b)
+
 
 getStructureString :: Structure -> String
 getStructureString content =
   case content of
-    Structure str -> str
+    Heading n str -> el ("h" <> show n) (escape str)
+    Paragraph str -> el "p" (escape str)
+    UnorderedList items -> el "ul" (concatMap (el "li" . escape) items)
+    OrderedList items -> el "ol" (concatMap (el "li" . escape) items)
+    CodeBlock lines -> el "pre" (unlines lines)
 
 render :: Html -> String
 render html =
   case html of
     Html str -> str
 
-
+-- Not working properly
 escape :: String -> String
-escape  =
+escape =
     let
-        escapeChar c  =
+        escapeChar c =
             case c of
-                '<' -> "&lt;"
-                '>' -> "&gt;"
+                -- '<' -> "&lt;"
+                -- '>' -> "&gt;"
                 '&' -> "&amp;"
                 '"' -> "&quot;"
                 '\'' -> "&#39;"
                 _ -> [c]
-        in
-            concatMap escapeChar
+    in
+        concatMap escapeChar
+
+parse :: String -> Document
+parse = parseLines [] . lines
+
+parseLines :: [String] -> [String] -> Document
+parseLines currentParagraph txts =
+  let
+    paragraph = Paragraph (unlines (reverse currentParagraph)) -- (2), (3)
+  in
+    case txts of -- (4)
+      [] -> [paragraph]
+      currentLine : rest ->
+        if trim currentLine == ""
+          then
+            paragraph : parseLines [] rest -- (5)
+          else
+            parseLines (currentLine : currentParagraph) rest -- (6)
+
+trim :: String -> String
+trim = unwords . words
