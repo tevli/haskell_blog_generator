@@ -1,0 +1,47 @@
+cabal-version:       3.0
+
+name:                tevli_blog_generator
+version:             0.1.0.0
+synopsis:            A custom blog generator from markup files
+description:         Following this tutorial: https://learn-haskell.blog
+
+                     
+homepage:            https://github.com/tevli/haskell-blog-generator
+bug-reports:         https://github.com/tevli/haskell-blog-generator/issues
+license:             BSD-3-Clause
+license-file:        LICENSE.txt
+author:              Iwuoha Precious
+maintainer:          email@locahost
+category:            Learning, Web, Haskell
+extra-doc-files:
+  README.md
+
+
+common common-settings
+  default-language: Haskell2010
+  ghc-options:
+    -Wall
+
+library
+  import: common-settings
+  hs-source-dirs: src
+  build-depends:
+      base
+    , directory
+  exposed-modules:
+    HsBlog
+      HsBlog.Convert
+      HsBlog.Html
+        HsBlog.Html.Internal
+      HsBlog.Markup
+  -- other-modules:
+
+executable hs-blog-gen
+  import: common-settings
+  hs-source-dirs: app
+  main-is: Main.hs
+  build-depends:
+      base
+    , hs-blog
+  ghc-options:
+    -O
